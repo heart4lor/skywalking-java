@@ -104,18 +104,11 @@ public class GRPCChannelManager implements BootService, Runnable {
             grpcServers = Arrays.stream(Config.Collector.BACKEND_SERVICE.split(","))
                     .filter(StringUtil::isNotBlank)
                     .map(eachBackendService -> eachBackendService.split(":"))
-                    .filter(domainPortPairs -> {
-                        if (domainPortPairs.length < 2) {
-                            LOGGER.debug("Service address [{}] format error. The expected format is IP:port", domainPortPairs[0]);
-                            return false;
-                        }
-                        return true;
-                    })
                     .flatMap(domainPortPairs -> {
                         try {
                             return Arrays.stream(InetAddress.getAllByName(domainPortPairs[0]))
                                     .map(InetAddress::getHostAddress)
-                                    .map(ip -> String.format("%s:%s", ip, domainPortPairs[1]));
+                                    .map(ip -> String.format("%s:%s", ip, domainPortPairs.length < 2 ? "80" : domainPortPairs[1]));
                         } catch (Throwable t) {
                             LOGGER.error(t, "Failed to resolve {} of backend service.", domainPortPairs[0]);
                         }
